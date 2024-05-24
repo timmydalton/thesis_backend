@@ -1,3 +1,19 @@
+defmodule ThesisBackendWeb.CrossOrigin do
+  def get_origins() do
+    if System.get_env("MIX_ENV") == "prod" do
+      [
+
+      ]
+    else
+      [
+        "http://localhost:5173",
+        "https://localhost:5173",
+        "http://localhost:24679",
+      ]
+    end
+  end
+end
+
 defmodule ThesisBackendWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :thesis_backend
 
@@ -14,6 +30,12 @@ defmodule ThesisBackendWeb.Endpoint do
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
+
+  plug Corsica,
+    origins: ThesisBackendWeb.CrossOrigin.get_origins(),
+    allow_methods: :all,
+    max_age: 600,
+    allow_headers: :all
 
   # Serve at "/" the static files from "priv/static" directory.
   #

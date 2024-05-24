@@ -38,15 +38,23 @@ defmodule ThesisBackendWeb do
 
   def controller do
     quote do
-      use Phoenix.Controller,
-        formats: [:html, :json],
-        layouts: [html: ThesisBackendWeb.Layouts]
+      use Phoenix.Controller, namespace: ThesisBackendWeb
 
       import Plug.Conn
       import ThesisBackendWeb.Gettext
-
-      unquote(verified_routes())
+      alias ThesisBackendWeb.Router.Helpers, as: Routes
+      action_fallback ThesisBackendWeb.FallbackController
     end
+    # quote do
+    #   use Phoenix.Controller,
+    #     formats: [:html, :json],
+    #     layouts: [html: ThesisBackendWeb.Layouts]
+
+    #   import Plug.Conn
+    #   import ThesisBackendWeb.Gettext
+
+    #   unquote(verified_routes())
+    # end
   end
 
   def live_view do

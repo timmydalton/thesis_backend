@@ -4,10 +4,7 @@ defmodule ThesisBackendWeb.Router do
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
-    plug :fetch_live_flash
-    plug :put_root_layout, html: {ThesisBackendWeb.Layouts, :root}
-    plug :protect_from_forgery
-    plug :put_secure_browser_headers
+    plug :fetch_flash
   end
 
   pipeline :api do
@@ -16,8 +13,16 @@ defmodule ThesisBackendWeb.Router do
 
   scope "/", ThesisBackendWeb do
     pipe_through :browser
+  end
 
-    get "/", PageController, :home
+  scope "/api", ThesisBackendWeb.Api do
+    pipe_through [:api]
+  end
+
+  scope "/auth", ThesisBackendWeb.Api do
+    pipe_through [:api]
+
+    post "/signup", AccountController, :sign_in_account
   end
 
   # Other scopes may use custom stacks.
