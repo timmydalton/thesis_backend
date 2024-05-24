@@ -12,12 +12,6 @@ defmodule ThesisBackendWeb.FallbackController do
     |> json(%{success: true, data: data, fallback: "with_data"})
   end
 
-  def call(conn, {:success_vnpay, :with_msg, data}) do
-    conn
-    |> put_status(200)
-    |> json(data)
-  end
-
   def call(conn, {:success, :with_data, key, data}) do
     data =
       %{success: true, fallback: "with_data"}
