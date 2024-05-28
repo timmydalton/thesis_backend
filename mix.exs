@@ -59,7 +59,9 @@ defmodule ThesisBackend.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.2"},
       {:bcrypt_elixir, "~> 3.1"},
-      {:corsica, "~> 2.1"}
+      {:corsica, "~> 2.1"},
+      {:joken, "~> 2.6"},
+      {:timex, "~> 3.7.11"},
     ]
   end
 

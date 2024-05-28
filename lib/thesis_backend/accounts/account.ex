@@ -47,7 +47,6 @@ defmodule ThesisBackend.Accounts.Account do
       :role,
       :block_reason
     ])
-    |> validate_required([:email])
     |> unique_constraint(:email,
       name: :accounts_email_index,
       message: "email_already_taken"

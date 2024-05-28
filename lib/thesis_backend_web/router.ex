@@ -11,6 +11,14 @@ defmodule ThesisBackendWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :auth do
+    plug ThesisBackendWeb.Plug.AuthPlug
+  end
+
+  pipeline :account do
+    plug ThesisBackendWeb.Plug.AccountPlug
+  end
+
   scope "/", ThesisBackendWeb do
     pipe_through :browser
   end
@@ -22,7 +30,8 @@ defmodule ThesisBackendWeb.Router do
   scope "/auth", ThesisBackendWeb.Api do
     pipe_through [:api]
 
-    post "/signup", AccountController, :sign_in_account
+    post "/signup", AccountController, :sign_up_account
+    post "/signin", AccountController, :sign_in_account
   end
 
   # Other scopes may use custom stacks.
