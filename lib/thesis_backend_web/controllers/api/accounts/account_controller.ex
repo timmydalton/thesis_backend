@@ -3,6 +3,15 @@ defmodule ThesisBackendWeb.Api.AccountController do
 
   alias ThesisBackend.Accounts
   alias ThesisBackend.Accounts.Account
+  alias ThesisBackend.Tools
+
+  def get_account(conn, _params) do
+    user = Map.get(conn.assigns, :account)
+
+    res = if Tools.is_empty?(user), do: %{}, else: user
+
+    {:success, :with_data, res}
+  end
 
   def sign_up_account(_conn, params) do
     username = Map.get(params, "username")

@@ -11,10 +11,6 @@ defmodule ThesisBackendWeb.Router do
     plug :accepts, ["json"]
   end
 
-  pipeline :auth do
-    plug ThesisBackendWeb.Plug.AuthPlug
-  end
-
   pipeline :account do
     plug ThesisBackendWeb.Plug.AccountPlug
   end
@@ -24,7 +20,9 @@ defmodule ThesisBackendWeb.Router do
   end
 
   scope "/api", ThesisBackendWeb.Api do
-    pipe_through [:api]
+    pipe_through [:api, :account]
+
+    get "/@me", AccountController, :get_account
   end
 
   scope "/auth", ThesisBackendWeb.Api do
