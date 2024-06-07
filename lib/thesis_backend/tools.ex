@@ -35,4 +35,11 @@ defmodule ThesisBackend.Tools do
 
   def to_int(el) when is_integer(el), do: el
   def to_int(_), do: 0
+
+  def get_page_limit_from_params(params) do
+    page = if !is_empty?(params["page"]), do: to_int(params["page"]), else: 1
+    limit = if !is_empty?(params["limit"]), do: to_int(params["limit"]), else: 15
+
+    {page, limit}
+  end
 end

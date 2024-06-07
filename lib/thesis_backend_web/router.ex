@@ -23,6 +23,14 @@ defmodule ThesisBackendWeb.Router do
     pipe_through [:api, :account]
 
     get "/@me", AccountController, :get_account
+
+    scope "/admin" do
+
+
+      scope "/products" do
+        get "/all", ProductController, :all
+      end
+    end
   end
 
   scope "/auth", ThesisBackendWeb.Api do

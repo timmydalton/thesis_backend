@@ -12,8 +12,6 @@ defmodule ThesisBackendWeb.Plug.AccountPlug do
 
     jwt = jwt || conn.req_cookies["jwt"]
 
-    IO.inspect(jwt)
-
     case Token.verify_and_validate(jwt) do
       {:ok, claims} ->
         account_id = Map.get(claims, "user_id")

@@ -23,6 +23,8 @@ defmodule ThesisBackend.Repo.Migrations.CreateAccounts do
 
       timestamps()
     end
+
+    create unique_index(:accounts, [:username])
   end
 
   def down do
