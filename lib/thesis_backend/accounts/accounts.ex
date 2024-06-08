@@ -62,7 +62,7 @@ defmodule ThesisBackend.Accounts do
     if !is_nil(user) && Bcrypt.verify_pass(password, user.password_hash) do
       token = generate_token(user.id)
       user = user
-        |> Account.to_json()
+        |> Account.json()
         |> Map.put(:access_token, token)
 
       {:ok, user}

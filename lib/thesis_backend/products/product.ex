@@ -3,19 +3,21 @@ defmodule ThesisBackend.Products.Product do
   import Ecto.Changeset
 
   alias ThesisBackend.Products.Product
+  alias ThesisBackend.Variations.Variation
 
   @primary_key {:id, :binary_id, autogenerate: true}
 
   schema "products" do
     field :name, :string
     field :description, :string
-    field :display_id, :string
+    field :custom_id, :string
     field :total_sold, :integer
-    field :slug, :string
     field :product_attributes, {:array, :map}
     field :image, :string
     field :is_removed, :boolean, default: false
     field :is_hidden, :boolean, default: false
+
+    has_many(:variations, Variation, foreign_key: :product_id)
 
     timestamps()
   end
@@ -25,43 +27,53 @@ defmodule ThesisBackend.Products.Product do
     |> cast(attrs, [
       :name,
       :description,
-      :display_id,
+      :custom_id,
       :total_sold,
-      :slug,
       :product_attributes,
       :image,
       :is_removed,
       :is_hidden
     ])
-    |> unique_constraint(:display_id,
-      name: :products_display_id_index,
-      message: "display_id_taken"
-    )
-    |> unique_constraint(:slug,
-      name: :products_slug_index,
-      message: "slug_taken"
+    |> unique_constraint(:custom_id,
+      name: :products_custom_id_index,
+      message: "custom_id_taken"
     )
   end
 
-  def to_json(%Product{} = product) do
-    Map.take(product, [
+  def json(%Product{} = product) do
+    data = Map.take(product, [
       :name,
       :description,
-      :display_id,
+      :custom_id,
       :total_sold,
-      :slug,
       :product_attributes,
       :image,
       :is_removed,
       :is_hidden
     ])
+
+    data =
+      case Map.fetch(product, :variations) do
+        {:ok, %Ecto.Association.NotLoaded{}} ->
+          data
+
+        {:ok, value} ->
+          variations = Variation.json(value)
+
+          Map.put(data, :variations, variations)
+
+        :error ->
+          data
+      end
+
+    data
   end
 
-  def to_json(products) when is_list(products) do
-    Enum.map(products, &to_json(&1))
+  def json(products) when is_list(products) do
+    Enum.map(products, &json(&1))
   end
 
-  def to_json(product) when is_map(product), do: to_json(struct(Product, product))
+  def json(product) when is_map(product), do: json(struct(Product, product))
 
-  def to_json(_), do: nil
+  def json(_), do: nil
 end

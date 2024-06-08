@@ -18,7 +18,7 @@ defmodule ThesisBackendWeb.Plug.AccountPlug do
 
         if !is_nil(account_id) do
           account = Accounts.get_account_by_id(account_id)
-          |> Account.to_json()
+          |> Account.json()
 
           conn
           |> assign(:account, account)

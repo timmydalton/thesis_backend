@@ -63,7 +63,7 @@ defmodule ThesisBackend.Accounts.Account do
     ])
   end
 
-  def to_json(%Account{} = account) do
+  def json(%Account{} = account) do
     Map.take(account, [
       :id,
       :username,
@@ -84,7 +84,7 @@ defmodule ThesisBackend.Accounts.Account do
     ])
   end
 
-  def to_json(account) when is_map(account), do: to_json(struct(Account, account))
+  def json(account) when is_map(account), do: json(struct(Account, account))
 
-  def to_json(_), do: nil
+  def json(_), do: nil
 end

@@ -62,6 +62,8 @@ defmodule ThesisBackend.MixProject do
       {:corsica, "~> 2.1"},
       {:joken, "~> 2.6"},
       {:timex, "~> 3.7.11"},
+      {:httpoison, "~> 1.8"},
+      {:tmp, "~> 0.2.0"},
     ]
   end
 

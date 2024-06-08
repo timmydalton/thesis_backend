@@ -23,7 +23,7 @@ defmodule ThesisBackendWeb.Api.AccountController do
           {:ok, user} ->
             token = Accounts.generate_token(user.id)
             user = user
-              |> Account.to_json()
+              |> Account.json()
               |> Map.put(:access_token, token)
             {:success, :with_data, user}
           _ ->
