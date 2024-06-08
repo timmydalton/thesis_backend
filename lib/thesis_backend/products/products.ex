@@ -11,6 +11,12 @@ defmodule ThesisBackend.Products do
     |> Repo.insert(returning: true)
   end
 
+  def update_product(%Product{} = product, attrs \\ %{}, opts \\ []) do
+    product
+    |> Product.changeset(attrs)
+    |> Repo.update()
+  end
+
   def get_all_products(page \\ 1, limit \\ 20, opts \\ []) do
     offset = (page - 1) * limit
 

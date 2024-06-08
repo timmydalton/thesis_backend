@@ -53,6 +53,18 @@ config :tailwind,
     cd: Path.expand("../assets", __DIR__)
   ]
 
+# Use Aws.S3
+config :ex_aws,
+  access_key_id: "OCL8M344IA6L3FSKRC0R",
+  secret_access_key: "EqwUIKBRZDbRdtxkABW2bXVckeaVmLPqrmcIGJQ0",
+  region: "vn-hn-cmc"
+
+config :ex_aws, :s3,
+  scheme: "https://",
+  host: "statics.pancake.vn",
+  region: "vn-north-vtpv",
+  virtual_host: true
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

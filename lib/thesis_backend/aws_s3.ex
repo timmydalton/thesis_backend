@@ -5,7 +5,7 @@ defmodule ThesisBackend.AwsS3 do
   def upload(binary, _, _) when not is_binary(binary), do: {:error, :invalid_type}
 
   def upload(binary, ext, content_type) do
-    bucket_name = if web_content
+    bucket_name = "web_content"
 
     hash_res = Tools.hash(binary)
     hash_chunks = for <<x::binary-2 <- hash_res>>, do: x

@@ -188,6 +188,37 @@ defmodule ThesisBackend.Variations do
       data
     )
     |> elem(0)
+  end
 
+  def get_all_ids_variation_removed(product_id, ids) do
+    query =
+      from(
+        v in Variation,
+        where:
+          v.product_id == ^product_id and
+            v.is_removed == false and
+            v.id not in ^ids,
+        order_by: [desc: :custom_id],
+        select: v.id
+      )
+      |> Repo.all()
+
+    {:ok, query}
+  end
+
+  def remove_variation_by_ids(product_id, ids) do
+    {success, error} =
+      Enum.reduce(ids, {[], []}, fn el, acc ->
+        {s, e} = acc
+
+        case create_or_update_variation(product_id, %{"is_removed" => true, "id" => el}) do
+          {:ok, value} -> {s ++ [value], e}
+          {:error, err} -> {s, e ++ [err]}
+        end
+      end)
+
+    if length(error) == 0,
+      do: {:ok, success},
+      else: {:error, :update_variations_failed}
   end
 end

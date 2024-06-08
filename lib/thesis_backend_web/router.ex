@@ -31,6 +31,7 @@ defmodule ThesisBackendWeb.Router do
         get "/all", ProductController, :all
         post "/create", ProductController, :create
         post "/update", ProductController, :update
+        get "/:product_id", ProductController, :get_product_by_id
 
         scope "/product_tags" do
           post "/create_or_update", ProductController, :create_or_update_product_tag
@@ -40,6 +41,7 @@ defmodule ThesisBackendWeb.Router do
 
       scope "/content" do
         post "/b64", ContentController, :upload_base64
+        post "/upload_file", ContentController, :upload_file
       end
     end
   end

@@ -64,6 +64,8 @@ defmodule ThesisBackend.MixProject do
       {:timex, "~> 3.7.11"},
       {:httpoison, "~> 1.8"},
       {:tmp, "~> 0.2.0"},
+      {:ex_aws, "~> 2.0"},
+      {:ex_aws_s3, "~> 2.0"},
     ]
   end
 

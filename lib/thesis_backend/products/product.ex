@@ -41,16 +41,10 @@ defmodule ThesisBackend.Products.Product do
   end
 
   def json(%Product{} = product) do
-    data = Map.take(product, [
-      :name,
-      :description,
-      :custom_id,
-      :total_sold,
-      :product_attributes,
-      :image,
-      :is_removed,
-      :is_hidden
-    ])
+    fields = __schema__(:fields) ++ __schema__(:virtual_fields)
+    virtual_fields = __schema__(:virtual_fields)
+
+    data = Map.take(product, fields ++ virtual_fields)
 
     data =
       case Map.fetch(product, :variations) do
