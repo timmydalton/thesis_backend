@@ -19,6 +19,8 @@ defmodule ThesisBackend.Categories.Category do
     field(:position, :integer, default: 0)
     field(:depth, :integer, default: 0)
 
+    field :children, {:array, :map}, virtual: true
+
     field :total_product_hidden, :integer, virtual: true
     field :total_product_visible, :integer, virtual: true
 

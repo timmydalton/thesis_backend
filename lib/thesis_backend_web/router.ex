@@ -32,6 +32,7 @@ defmodule ThesisBackendWeb.Router do
         post "/create", ProductController, :create
         post "/update", ProductController, :update
         post "/hidden", ProductController, :change_hidden
+        post "/remove", ProductController, :remove_products
         get "/:product_id", ProductController, :get_product_by_id
 
         scope "/product_tags" do

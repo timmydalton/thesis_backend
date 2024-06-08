@@ -3,6 +3,7 @@ defmodule ThesisBackend.Products do
 
   alias ThesisBackend.Products.Product
   alias ThesisBackend.Variations.Variation
+  alias ThesisBackend.Categories.{ProductCategory, Category}
   alias ThesisBackend.{Repo, Tools}
 
   def create_product(attrs \\ %{}) do
@@ -32,6 +33,12 @@ defmodule ThesisBackend.Products do
         where: not v.is_removed
       )
 
+    category_preload_query =
+      ProductCategory
+      |> join(:inner, [pc], c in Category, on: pc.category_id == c.id and not c.is_removed)
+      |> where([pc], not pc.is_removed)
+      |> select([pc, c], c)
+
     total_product =
       Repo.all(
         from(
@@ -45,7 +52,8 @@ defmodule ThesisBackend.Products do
     query = from(
       p in query,
       preload: [
-        variations: ^preload_variation
+        variations: ^preload_variation,
+        categories: ^category_preload_query
       ]
     )
 
@@ -59,12 +67,25 @@ defmodule ThesisBackend.Products do
       Variation
       |> where([v], v.product_id == ^id and v.is_removed == false)
 
+    category_preload_query =
+      ProductCategory
+      |> join(:inner, [pc], c in Category, on: pc.category_id == c.id and not c.is_removed)
+      |> where([pc], not pc.is_removed)
+      |> select([pc, c], c)
+
     Product
     |> where([p], not p.is_removed and p.id == ^id)
     |> preload(
       variations: ^variation_preload_query,
+      categories: ^category_preload_query
     )
     |> Repo.one()
     |> Tools.get_record()
+  end
+
+  def remove_product_by_ids(ids) do
+    Product
+    |> where([p], p.id in ^ids and not p.is_removed)
+    |> Repo.update_all(set: [is_removed: true])
   end
 end

@@ -221,4 +221,10 @@ defmodule ThesisBackend.Variations do
       do: {:ok, success},
       else: {:error, :update_variations_failed}
   end
+
+  def remove_variations_by_product_ids(ids) do
+    Variation
+    |> where([v], v.product_id in ^ids and not v.is_removed)
+    |> Repo.update_all(set: [is_removed: true])
+  end
 end

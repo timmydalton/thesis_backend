@@ -6,7 +6,7 @@ defmodule ThesisBackendWeb.Api.ProductController do
   alias ThesisBackend.Tools
   alias ThesisBackend.Products.Product
   alias ThesisBackend.Tags.ProductTag
-  alias ThesisBackend.{ Products, Tags, Variations, Repo }
+  alias ThesisBackend.{ Products, Tags, Variations, Repo, Categories }
 
   def all(conn, %{"page" => _page, "limit" => _limit} = params) do
     {page, limit} = Tools.get_page_limit_from_params(params)
@@ -37,6 +37,9 @@ defmodule ThesisBackendWeb.Api.ProductController do
           product_params["variations"],
           "create"
         )
+      end)
+      |> Multi.run(:product_categories, fn _, %{product: product} ->
+        Categories.create_product_categories(product_params["categories"], product.id)
       end)
 
       case Repo.transaction(multi) do
@@ -78,6 +81,8 @@ defmodule ThesisBackendWeb.Api.ProductController do
       |> Enum.map(fn el -> el["id"] end)
       |> Enum.filter(fn el -> !Tools.is_empty?(el) end)
 
+    ids_categories = product_params["categories"]
+
     multi =
       Multi.new()
       |> Multi.run(:product, fn _, _ ->
@@ -98,6 +103,22 @@ defmodule ThesisBackendWeb.Api.ProductController do
           product_params["variations"],
           "update"
         )
+      end)
+      |> Multi.run(:rm_categories, fn _, %{product: product} ->
+        ids_cate_rm =
+          Enum.filter(product.categories, fn el -> !Enum.member?(ids_categories, el.id) end)
+
+        ids_cate_rm = Enum.map(ids_cate_rm, fn el -> el.id end)
+
+        Categories.remove_product_categories(ids_cate_rm, product.id)
+      end)
+      |> Multi.run(:product_categories, fn _, %{product: product} ->
+        id_categories = product.categories |> Enum.map(fn el -> el.id end)
+
+        _ids_cate_create =
+          Enum.filter(ids_categories, fn el -> !Enum.member?(id_categories, el) end)
+
+        Categories.create_product_categories(ids_categories, product.id)
       end)
 
     case Repo.transaction(multi) do
@@ -213,5 +234,28 @@ defmodule ThesisBackendWeb.Api.ProductController do
         _ ->
           {:failed, :with_reason, "Something went wrong!"}
       end
+  end
+
+  def remove_products(conn, params) do
+    ids = params["ids"]
+
+    multi =
+      Multi.new()
+      |> Multi.run(:products, fn _, _ ->
+        Products.remove_product_by_ids(ids)
+        {:ok, :pass}
+      end)
+
+    case Repo.transaction(multi) do
+      {:ok, res} ->
+        Task.async(fn ->
+          Variations.remove_variations_by_product_ids(ids)
+        end)
+
+        {:success, :success_only}
+
+      _ ->
+        {:failed, :with_reason, "Something went wrong!"}
+    end
   end
 end

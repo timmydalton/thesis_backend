@@ -4,6 +4,7 @@ defmodule ThesisBackend.Products.Product do
 
   alias ThesisBackend.Products.Product
   alias ThesisBackend.Variations.Variation
+  alias ThesisBackend.Categories.{Category, ProductCategory}
 
   @primary_key {:id, :binary_id, autogenerate: true}
 
@@ -18,6 +19,7 @@ defmodule ThesisBackend.Products.Product do
     field :is_hidden, :boolean, default: false
 
     has_many(:variations, Variation, foreign_key: :product_id)
+    has_many(:categories, ProductCategory)
 
     timestamps()
   end
@@ -55,6 +57,22 @@ defmodule ThesisBackend.Products.Product do
           variations = Variation.json(value)
 
           Map.put(data, :variations, variations)
+
+        :error ->
+          data
+      end
+
+    data =
+      case Map.fetch(product, :categories) do
+        {:ok, %Ecto.Association.NotLoaded{}} ->
+          Map.put(data, :categories, [])
+
+        {:ok, nil} ->
+          data
+
+        {:ok, value} ->
+          categories = Category.json(value)
+          Map.put(data, :categories, categories)
 
         :error ->
           data

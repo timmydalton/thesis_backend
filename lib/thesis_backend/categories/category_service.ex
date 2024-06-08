@@ -84,6 +84,67 @@ defmodule ThesisBackend.CategoryService do
     {:ok, data}
   end
 
+  def execute_command("bulk_add_product_to_category", data, opts) do
+    category = Keyword.get(opts, :category)
+
+    pc =
+      data["ids"]
+      |> Enum.reverse()
+      |> Enum.map(fn el ->
+        attrs = %{
+          product_id: el,
+          category_id: data["id"],
+        }
+
+        get = fn ->
+          Categories.get_product_category(el, data["id"])
+        end
+
+        create = fn ->
+          Categories.create_product_category(attrs)
+        end
+
+        update = fn product_category ->
+          {:ok, product_category}
+        end
+
+        Categories.create_or_update(get, create, update)
+        |> case do
+          {:ok, product_category} -> product_category
+          {:error, error} -> Repo.rollback(error)
+        end
+      end)
+
+    {:ok, :success}
+  end
+
+  def execute_command("bulk_remove_product_in_category", data, opts) do
+    category = Keyword.get(opts, :category)
+
+    pc =
+      Enum.map(data["ids"], fn el ->
+        get = fn ->
+          Categories.get_product_category(el, data["id"])
+        end
+
+        create = fn ->
+          {:ok, :success}
+        end
+
+        update = fn product_category ->
+          Categories.update_product_category(product_category, %{is_removed: true})
+        end
+
+        Categories.create_or_update(get, create, update)
+        |> case do
+          {:ok, product_category} -> product_category
+          {:error, error} -> Repo.rollback(error)
+        end
+      end)
+
+    {:ok, :success}
+  end
+
   def build_tree(categories, parent_id \\ nil) do
     categories
     |> Enum.reduce([], fn category, acc ->
