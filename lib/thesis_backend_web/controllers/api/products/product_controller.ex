@@ -178,4 +178,40 @@ defmodule ThesisBackendWeb.Api.ProductController do
       end
 
   end
+
+  def change_hidden(_conn, %{"data" => data} = params) do
+    multi =
+      Multi.new()
+      |> Multi.run(:update, fn _, _ ->
+        {errors, products} =
+          Enum.reduce(data, {[], []}, fn el, acc ->
+            {e, s} = acc
+
+            product = Repo.get_by(Product, %{id: el["product_id"]})
+
+            if product do
+              Products.update_product(product, %{is_hidden: el["is_hidden"]})
+              |> case do
+                {:ok, v} -> {e, s ++ [v]}
+                {:error, changeset} -> {e ++ [changeset.errors], s}
+              end
+            else
+              {e ++ [:error], s}
+            end
+          end)
+
+        if errors == [], do: {:ok, products}, else: {:error, errors}
+      end)
+
+    Repo.transaction(multi)
+      |> case do
+        {:ok, res} ->
+          products = Product.json(res.update)
+
+          {:success, :with_data, "products", products}
+
+        _ ->
+          {:failed, :with_reason, "Something went wrong!"}
+      end
+  end
 end

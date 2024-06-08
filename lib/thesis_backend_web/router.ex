@@ -31,12 +31,21 @@ defmodule ThesisBackendWeb.Router do
         get "/all", ProductController, :all
         post "/create", ProductController, :create
         post "/update", ProductController, :update
+        post "/hidden", ProductController, :change_hidden
         get "/:product_id", ProductController, :get_product_by_id
 
         scope "/product_tags" do
           post "/create_or_update", ProductController, :create_or_update_product_tag
           get "/all", ProductController, :get_all_product_tags
         end
+      end
+
+      scope "/categories" do
+        get "/all", CategoryController, :all
+        post "/create", CategoryController, :create
+        post "/update", CategoryController, :update
+        post "/delete", CategoryController, :delete
+        post "/build_tree", CategoryController, :build_tree
       end
 
       scope "/content" do

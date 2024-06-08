@@ -66,6 +66,7 @@ defmodule ThesisBackend.MixProject do
       {:tmp, "~> 0.2.0"},
       {:ex_aws, "~> 2.0"},
       {:ex_aws_s3, "~> 2.0"},
+      {:mogrify, "~> 0.9.3"},
     ]
   end
 
