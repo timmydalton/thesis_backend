@@ -54,7 +54,8 @@ defmodule ThesisBackend.Products do
       preload: [
         variations: ^preload_variation,
         categories: ^category_preload_query
-      ]
+      ],
+      order_by: [desc: p.inserted_at]
     )
 
     products = Repo.all(query)
