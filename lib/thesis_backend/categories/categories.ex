@@ -4,6 +4,8 @@ defmodule ThesisBackend.Categories do
 
   alias ThesisBackend.Categories.{Category, ProductCategory}
   alias ThesisBackend.{Repo, CategoryService, Tools}
+  alias ThesisBackend.Variations.Variation
+  alias ThesisBackend.Products.Product
 
   def create_or_update(get, create, update) do
     case get.() do
@@ -53,6 +55,33 @@ defmodule ThesisBackend.Categories do
     |> where([c], c.id == ^id and not c.is_removed)
     |> Repo.one()
     |> Tools.get_record()
+  end
+
+  def get_category_ids(category_id) do
+    category_tree_initial_query =
+      Category
+      |> where(
+        [c],
+        c.id == ^category_id and not c.is_removed
+      )
+
+    category_tree_recursion_query =
+      Category
+      |> join(:inner, [c], cte in "cte", on: c.parent_id == cte.id)
+      |> where(
+        [c],
+        not c.is_removed
+      )
+
+    category_tree_query =
+      category_tree_initial_query
+      |> union_all(^category_tree_recursion_query)
+
+    {"cte", Category}
+    |> recursive_ctes(true)
+    |> with_cte("cte", as: ^category_tree_query)
+    |> Repo.all()
+    |> Enum.map(& &1.id)
   end
 
   def get_all_category(params) do
@@ -182,5 +211,82 @@ defmodule ThesisBackend.Categories do
     end)
 
     {:ok, :success}
+  end
+
+  def get_products(category_id, params) do
+    {:ok, category} = get_category_by_id(category_id)
+    limit = Tools.to_int(params["limit"] || "20")
+    page = Tools.to_int(params["page"] || "1")
+    offset = (page - 1) * limit
+
+    category_ids = get_category_ids(category_id)
+
+    query = Product
+      |> join(:left, [p], v in Variation, on: v.product_id == p.id and not v.is_removed)
+      |> join(:left, [p],  pc in assoc(p, :categories))
+      |> where([p, v, pc], not p.is_removed and
+      pc.category_id in ^category_ids and not pc.is_removed)
+
+    query =
+      query
+      |> group_by([p], [
+        p.id,
+        p.name,
+        p.is_hidden,
+        p.inserted_at,
+        p.custom_id,
+        p.updated_at,
+      ])
+
+    get_total_entries = fn ->
+      record =
+        query
+        |> select([p], %{total: fragment("COUNT(?) OVER ()", p.id)})
+        |> Repo.all()
+        |> List.first()
+
+      (record || %{})
+      |> Map.get(:total)
+    end
+
+    query =
+      query
+      |> select([p, v], %{
+        id: p.id,
+        name: p.name,
+        is_hidden: p.is_hidden,
+        inserted_at: p.inserted_at,
+        updated_at: p.updated_at,
+        custom_id: p.custom_id
+      })
+
+    query
+      |> offset([p], ^offset)
+      |> limit([p], ^limit)
+
+    [data, total_entries] =
+      Task.await_many([
+        Task.async(fn ->
+          Repo.all(query)
+        end),
+        Task.async(fn ->
+          get_total_entries.()
+        end)
+      ])
+
+    product_ids = Enum.map(data, & &1.id)
+
+    variations =
+      Variation
+      |> where([v], v.product_id in ^product_ids)
+      |> Repo.all()
+
+    data =
+      Enum.map(data, fn product ->
+        variations = Enum.filter(variations, & &1.product_id == product.id) |> Variation.json()
+        Map.put(product, :variations, variations)
+      end)
+
+    {:ok, data, total_entries}
   end
 end

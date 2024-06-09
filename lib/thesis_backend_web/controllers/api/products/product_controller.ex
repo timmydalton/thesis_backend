@@ -258,4 +258,18 @@ defmodule ThesisBackendWeb.Api.ProductController do
         {:failed, :with_reason, "Something went wrong!"}
     end
   end
+
+  def get_all_product_by_category(conn, %{"page" => page, "limit" => limit, "category_id" => category_id} = params) do
+    with {:ok, products, total_product} <-
+      Categories.get_products(category_id, params) do
+
+      json(conn, %{
+        success: true,
+        products: products,
+        total_product: total_product,
+        page: page,
+        limit: limit
+      })
+      end
+  end
 end

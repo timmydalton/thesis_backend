@@ -24,6 +24,18 @@ defmodule ThesisBackendWeb.Router do
 
     get "/@me", AccountController, :get_account
 
+    scope "/store" do
+      scope "/products" do
+        get "/all", ProductController, :all
+        get "/all_by_category", ProductController, :get_all_product_by_category
+        get "/:product_id", ProductController, :get_product_by_id
+      end
+
+      scope "/categories" do
+        get "/all", CategoryController, :all
+      end
+    end
+
     scope "/admin" do
 
 
