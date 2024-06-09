@@ -226,6 +226,7 @@ defmodule ThesisBackend.Categories do
       |> join(:left, [p],  pc in assoc(p, :categories))
       |> where([p, v, pc], not p.is_removed and
       pc.category_id in ^category_ids and not pc.is_removed)
+      |> order_by([p], desc: p.inserted_at)
 
     query =
       query
