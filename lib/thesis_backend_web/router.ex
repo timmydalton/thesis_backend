@@ -34,6 +34,9 @@ defmodule ThesisBackendWeb.Router do
       scope "/categories" do
         get "/all", CategoryController, :all
       end
+
+      scope "/order" do
+      end
     end
 
     scope "/admin" do

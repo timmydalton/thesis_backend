@@ -2,6 +2,7 @@ defmodule ThesisBackend.Variations do
   import Ecto.Query
 
   alias ThesisBackend.Variations.Variation
+  alias ThesisBackend.Products.Product
   alias ThesisBackend.{Repo, Parse, Tools}
 
   @field_variation [
@@ -226,5 +227,66 @@ defmodule ThesisBackend.Variations do
     Variation
     |> where([v], v.product_id in ^ids and not v.is_removed)
     |> Repo.update_all(set: [is_removed: true])
+  end
+
+  def get_variation_by_id(variation_id) do
+    Variation
+    |> where([v], v.id == ^variation_id and not v.is_removed)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, :variation_not_found}
+      v -> {:ok, v}
+    end
+  end
+
+  def get_variation_by_id(variation_id, :hidden) do
+    preload_product =
+      from p in Product,
+        where: not p.is_removed and not p.is_hidden
+
+    Variation
+    |> where([v], v.id == ^variation_id and not v.is_removed and (is_nil(v.is_hidden) or not v.is_hidden))
+    |> preload([v], product: ^preload_product)
+    |> Repo.one()
+    |> case do
+      nil ->
+        {:error, %{
+        message_code: "variation_000",
+        message: "variation_not_found",
+        variation_id: variation_id
+      }}
+      v ->
+        cond do
+          v.product && v.product.is_hidden == false ->
+            {:ok, v}
+          true ->
+            {:error, %{
+              message_code: "variation_000",
+              message: "variation_not_found",
+              variation_id: variation_id
+            }}
+        end
+    end
+  end
+
+  def check_remain_quantity_variation(params) do
+    variations =
+      Enum.map(params["order_items"], fn el ->
+        get_variation_by_id(el["id"], :hidden)
+        |> case do
+          {:ok, vari} ->
+            if vari.remain_quantity > 0,
+               do: vari,
+               else: nil
+
+          _ ->
+            nil
+        end
+      end)
+      |> Enum.filter(&(&1 != nil))
+
+    if length(variations) > 0,
+      do: {:ok, :no_pass},
+      else: {:ok, :passed}
   end
 end

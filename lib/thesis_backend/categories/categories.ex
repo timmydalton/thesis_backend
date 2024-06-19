@@ -214,7 +214,6 @@ defmodule ThesisBackend.Categories do
   end
 
   def get_products(category_id, params) do
-    {:ok, category} = get_category_by_id(category_id)
     limit = Tools.to_int(params["limit"] || "20")
     page = Tools.to_int(params["page"] || "1")
     offset = (page - 1) * limit
