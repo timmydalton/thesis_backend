@@ -1,9 +1,10 @@
-defmodule ThesisBackend.Api.OrderController do
+defmodule ThesisBackendWeb.Api.OrderController do
   use ThesisBackendWeb, :controller
 
   alias Ecto.Multi
-  alias ThesisBackend.{Tools, Orders, Variations}
+  alias ThesisBackend.{Tools, Repo, Orders, Variations}
   alias ThesisBackend.Services.OrderService
+  alias ThesisBackend.Orders.Order
 
   def quick_order(conn, params) do
     multi =
@@ -23,12 +24,33 @@ defmodule ThesisBackend.Api.OrderController do
         order =
           result.order
           |> Orders.preload_order(preload_order_items: true)
+          |> Order.json()
+
+        {:success, :with_data, %{
+          "message" => "Order Successfully",
+          "data" => order,
+        }}
 
       {:error, :order_items, error, _order_info} ->
+        IO.inspect(error)
         {:failed, :with_reason, error}
 
       reason ->
-        Tools.log_order_storev2("QUICK_ORDER_ERROR:", %{"reason" => reason , "params" => params})
+        IO.inspect("unhandled case")
         {:failed, :with_reason, reason}
+    end
+  end
+
+  def all(conn, params) do
+    with {:ok, orders} <- Orders.get_all_order(params) do
+      data = Order.json(orders.data)
+
+      orders =
+        Map.merge(orders, %{
+          data: data
+        })
+
+      {:success, :with_data, "orders", orders}
+    end
   end
 end

@@ -36,6 +36,7 @@ defmodule ThesisBackendWeb.Router do
       end
 
       scope "/order" do
+        post "/quick_order", OrderController, :quick_order
       end
     end
 
@@ -67,6 +68,10 @@ defmodule ThesisBackendWeb.Router do
       scope "/content" do
         post "/b64", ContentController, :upload_base64
         post "/upload_file", ContentController, :upload_file
+      end
+
+      scope "/orders" do
+        get "/all", OrderController, :all
       end
     end
   end

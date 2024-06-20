@@ -5,16 +5,16 @@ defmodule ThesisBackend.Variations do
   alias ThesisBackend.Products.Product
   alias ThesisBackend.{Repo, Parse, Tools}
 
-  @field_variation [
-    "fields",
-    "custom_id",
-    "remain_quantity",
-    "retail_price",
-    "original_price",
-    "images",
-    "is_hidden",
-    "is_removed",
-  ]
+  # @field_variation [
+  #   "fields",
+  #   "custom_id",
+  #   "remain_quantity",
+  #   "retail_price",
+  #   "original_price",
+  #   "images",
+  #   "is_hidden",
+  #   "is_removed",
+  # ]
 
   def update_variation(%Variation{} = variation, attrs) do
     variation
@@ -76,37 +76,36 @@ defmodule ThesisBackend.Variations do
   end
 
   def sort_variations(variations, product) do
-    data_variations =
-      Enum.map(variations, fn variation_params ->
-        variation_fields =
-          case variation_params["fields"] do
-            fields when is_map(fields) ->
-              Map.values(fields)
+    Enum.map(variations, fn variation_params ->
+      variation_fields =
+        case variation_params["fields"] do
+          fields when is_map(fields) ->
+            Map.values(fields)
 
-            fields ->
-              if fields == "-1", do: [], else: fields || []
-          end
+          fields ->
+            if fields == "-1", do: [], else: fields || []
+        end
 
-        product_attributes =
-          if product.product_attributes,
-            do: Parse.struct_to_map(product.product_attributes),
-            else: []
+      product_attributes =
+        if product.product_attributes,
+          do: Parse.struct_to_map(product.product_attributes),
+          else: []
 
-        fields =
-          if product_attributes != [] && variation_fields != [] do
-            check_variation_field_by_product_attributes(
-              Parse.struct_to_map(variation_fields),
-              product_attributes
-            )
-          else
-            []
-          end
+      fields =
+        if product_attributes != [] && variation_fields != [] do
+          check_variation_field_by_product_attributes(
+            Parse.struct_to_map(variation_fields),
+            product_attributes
+          )
+        else
+          []
+        end
 
-        variation_params =
-          Map.merge(variation_params, %{
-            "fields" => fields
-          })
-      end)
+      variation_params =
+        Map.merge(variation_params, %{
+          "fields" => fields
+        })
+    end)
   end
 
   def parse_variation_sort_fields(variation_fields, product_attributes) do
@@ -182,7 +181,7 @@ defmodule ThesisBackend.Variations do
   end
 
   def insert_all_vari_by_custom_id(data) do
-    keys = if length(data) > 0, do: Map.keys(data |> hd()) -- [:id, :inserted_at], else: []
+    # keys = if length(data) > 0, do: Map.keys(data |> hd()) -- [:id, :inserted_at], else: []
 
     Repo.insert_all(
       Variation,
@@ -272,7 +271,7 @@ defmodule ThesisBackend.Variations do
   def check_remain_quantity_variation(params) do
     variations =
       Enum.map(params["order_items"], fn el ->
-        get_variation_by_id(el["id"], :hidden)
+        get_variation_by_id(el["variation_id"], :hidden)
         |> case do
           {:ok, vari} ->
             if vari.remain_quantity > 0,

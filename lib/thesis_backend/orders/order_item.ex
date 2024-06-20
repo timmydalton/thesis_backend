@@ -3,10 +3,12 @@ defmodule ThesisBackend.Orders.OrderItem do
   import Ecto.Changeset
   alias ThesisBackend.Variations.Variation
   alias ThesisBackend.Tools
+
   @non_required_fields [:id, :inserted_at, :updated_at]
+  @primary_key {:id, :binary_id, autogenerate: true}
 
   schema "order_items" do
-    field :order_id, :integer
+    field :order_id, :binary_id
     field :variation_info, :map
     field :quantity, :integer
     field :is_deleted, :boolean, default: false

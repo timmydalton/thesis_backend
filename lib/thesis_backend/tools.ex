@@ -184,4 +184,42 @@ defmodule ThesisBackend.Tools do
       end
     end)
   end
+
+  def get_start_end_time(params, timezone) do
+    start_time =
+      case Jason.decode(params["start_time"] || "") do
+        {:ok, value} -> value
+        _ -> params["start_time"]
+      end
+
+    start_time =
+      if start_time do
+        {:ok, start_time, _} = DateTime.from_iso8601(start_time)
+
+        start_time
+        |> Timex.beginning_of_day()
+        |> Timex.shift(minutes: -trunc(timezone * 60))
+      else
+        start_time
+      end
+
+    end_time =
+      case Jason.decode(params["end_time"] || "") do
+        {:ok, value} -> value
+        _ -> params["end_time"]
+      end
+
+    end_time =
+      if end_time do
+        {:ok, end_time, _} = DateTime.from_iso8601(end_time)
+
+        end_time
+        |> Timex.end_of_day()
+        |> Timex.shift(minutes: -trunc(timezone * 60))
+      else
+        end_time
+      end
+
+    {start_time, end_time}
+  end
 end

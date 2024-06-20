@@ -87,8 +87,7 @@ defmodule ThesisBackend.CategoryService do
   def execute_command("bulk_add_product_to_category", data, opts) do
     category = Keyword.get(opts, :category)
 
-    pc =
-      data["ids"]
+    data["ids"]
       |> Enum.reverse()
       |> Enum.map(fn el ->
         attrs = %{
@@ -121,26 +120,25 @@ defmodule ThesisBackend.CategoryService do
   def execute_command("bulk_remove_product_in_category", data, opts) do
     category = Keyword.get(opts, :category)
 
-    pc =
-      Enum.map(data["ids"], fn el ->
-        get = fn ->
-          Categories.get_product_category(el, data["id"])
-        end
+    Enum.map(data["ids"], fn el ->
+      get = fn ->
+        Categories.get_product_category(el, data["id"])
+      end
 
-        create = fn ->
-          {:ok, :success}
-        end
+      create = fn ->
+        {:ok, :success}
+      end
 
-        update = fn product_category ->
-          Categories.update_product_category(product_category, %{is_removed: true})
-        end
+      update = fn product_category ->
+        Categories.update_product_category(product_category, %{is_removed: true})
+      end
 
-        Categories.create_or_update(get, create, update)
-        |> case do
-          {:ok, product_category} -> product_category
-          {:error, error} -> Repo.rollback(error)
-        end
-      end)
+      Categories.create_or_update(get, create, update)
+      |> case do
+        {:ok, product_category} -> product_category
+        {:error, error} -> Repo.rollback(error)
+      end
+    end)
 
     {:ok, :success}
   end

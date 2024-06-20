@@ -53,14 +53,12 @@ defmodule ThesisBackendWeb.Api.ProductController do
           end
 
         {:error, :variations, changset, _} ->
-          IO.inspect(changset, label: "changesettt")
           message = Tools.get_error_message_from_changeset(changset, :not_get_key)
 
         {:failed, :with_reason,
           %{message_code: message, message: "Error create_or_update variation"}}
 
         {:error, :product, changset, _} ->
-          IO.inspect(changset, label: "changesettt")
           message = Tools.get_error_message_from_changeset(changset, :not_get_key)
 
         {:failed, :with_reason,

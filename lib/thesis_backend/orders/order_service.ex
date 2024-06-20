@@ -1,8 +1,7 @@
 defmodule ThesisBackend.Services.OrderService do
-  import ThesisBackend.Guards
+  # import ThesisBackend.Guards
 
-  alias ThesisBackend.{Orders, Variations, Products}
-  alias ThesisBackend.Orders.Order
+  alias ThesisBackend.{Orders, Variations, Tools}
 
   def create_or_update_order(conn, account, params) do
     account_id = if conn.assigns[:account], do: conn.assigns[:account].id, else: nil
@@ -29,7 +28,7 @@ defmodule ThesisBackend.Services.OrderService do
       ])
       |> Map.merge(%{
         "shipping_address" => params["shipping_address"],
-        "bill_full_name" => Map.get(params, "first_name", "") <> " " <> Map.get(params, "last_name", "")),
+        "bill_full_name" => Map.get(params, "first_name", "") <> " " <> Map.get(params, "last_name", ""),
         "bill_phone_number" => params["phone_number"],
         "invoice_value" => invoice_value,
         "note" => params["note"],
@@ -42,14 +41,40 @@ defmodule ThesisBackend.Services.OrderService do
     Orders.create_or_update(get, create, update)
   end
 
+  def update_variation_quantity(variation_id, nil, new_quantity),
+    do: update_variation_quantity(variation_id, 0, new_quantity)
+
+  def update_variation_quantity(_variation_id, old_quantity, new_quantity)
+      when old_quantity == new_quantity,
+      do: {:ok, :quantity_not_change}
+
+  def update_variation_quantity(variation_id, old_quantity, new_quantity) do
+    with {:ok, variation} <- Variations.get_variation_by_id(variation_id, :hidden) do
+      remain_quantity = Tools.to_int(variation.remain_quantity) + old_quantity - new_quantity
+
+      if remain_quantity >= 0 do
+        Variations.update_variation(variation, %{remain_quantity: remain_quantity})
+      else
+        {:error,
+         %{
+           message_code: 2003,
+           message: "remain_quantity_not_enough",
+           variation_id: variation.id,
+           remain_quantity: variation.remain_quantity
+         }}
+      end
+    else
+      error -> error
+    end
+  end
+
   def create_or_update_order_items(account, params, order) do
-    order_items = params["order_items"]
-
-    product_ids =
-      Enum.map(order_items || [], & &1["variation_info"]["product_id"])
-      |> Enum.uniq()
-
-    promos = Enum.filter(promos, &(&1.pos_id && &1.type == "coupon"))
+    order_items = (params["order_items"] || [])
+      |> Enum.map(fn el ->
+        Map.merge(el, %{
+          "order_id" => order.id
+        })
+        end)
 
     {success, error} =
       order_items
@@ -60,12 +85,7 @@ defmodule ThesisBackend.Services.OrderService do
         update = fn item -> Orders.update_order_item(item, el) end
 
         with {:ok, order_item} <- Orders.create_or_update(get, create, update),
-             {:ok, _} <-
-               update_variation_quantity(
-                 el["variation_id"],
-                 el["old_quantity"],
-                 el["quantity"]
-               ) do
+             {:ok, _} <- update_variation_quantity(el["variation_id"], el["old_quantity"], el["quantity"]) do
           {s ++ [order_item], e}
         else
           {:error, changeset} -> {s, e ++ [changeset]}

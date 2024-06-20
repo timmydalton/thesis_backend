@@ -14,7 +14,6 @@ defmodule ThesisBackend.Orders.Order do
     field :shipping_address, :map
     field :note, :string, default: ""
     field :status, :integer, default: 0
-    field :form_data, :map
 
     field :shipping_fee, :integer, default: 0
     field :transfer_money, :integer, default: 0

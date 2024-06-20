@@ -58,7 +58,6 @@ defmodule ThesisBackendWeb.Api.CategoryController do
 
       error ->
         {:failed, :with_reason, "Something went wrong"}
-        IO.inspect(error, label: "labelll")
     end
   end
 
