@@ -2,7 +2,7 @@ defmodule ThesisBackendWeb.Api.OrderController do
   use ThesisBackendWeb, :controller
 
   alias Ecto.Multi
-  alias ThesisBackend.{Tools, Repo, Orders, Variations}
+  alias ThesisBackend.{Tools, Repo, Orders, Variations, Accounts}
   alias ThesisBackend.Services.OrderService
   alias ThesisBackend.Orders.Order
 
@@ -52,5 +52,37 @@ defmodule ThesisBackendWeb.Api.OrderController do
 
       {:success, :with_data, "orders", orders}
     end
+  end
+
+  def get_order_by_time(_conn, params) do
+    [insight_order, insight_revenue, insight_account, {:ok, info_order}, {:ok, compare_info_order}]  =
+      [
+        Task.async(fn ->
+          Orders.get_insight_order_time(params)
+        end),
+        Task.async(fn ->
+          Orders.get_insight_revenue_time(params)
+        end),
+        Task.async(fn ->
+          Accounts.get_insight_account_time(params)
+        end),
+        Task.async(fn ->
+          Orders.get_info_orders(params)
+        end),
+        Task.async(fn ->
+          Orders.compare_info_order(params)
+        end)
+      ]
+    |> Enum.map(&Task.await(&1, :infinity))
+
+    data = %{
+      insight_order: insight_order,
+      insight_revenue: insight_revenue,
+      insight_account: insight_account,
+      info_order: info_order |> Enum.map(&Order.json(&1, selected_fields: [:id, :status, :ads_source, :invoice_value])),
+      compare_info_order: compare_info_order |> Enum.map(&Order.json(&1))
+    }
+
+    {:success, :with_data, :insight, data}
   end
 end

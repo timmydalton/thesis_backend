@@ -2,7 +2,7 @@ defmodule ThesisBackend.Accounts do
   import Ecto.Query, warn: false
 
   alias ThesisBackend.Accounts.Account
-  alias ThesisBackend.{Repo, Token}
+  alias ThesisBackend.{Repo, Token, Tools}
 
   def update_account(user_id, attrs) do
     query =
@@ -93,5 +93,28 @@ defmodule ThesisBackend.Accounts do
 
     query
     |> Repo.one()
+  end
+
+  def get_insight_account_time(params) do
+    {start_time, end_time} =  {NaiveDateTime.from_iso8601!(params["startTime"]), NaiveDateTime.from_iso8601!(params["endTime"])}
+    raw_query = """
+      SELECT count(accounts.id), day::date
+      FROM
+        generate_series(
+          date('#{Timex.shift(start_time, hours: 7)}'),
+          date('#{Timex.shift(end_time, hours: 7)}'),
+          '1 day'::interval
+        ) day
+      left join (
+        select * from accounts
+        where accounts.inserted_at >= '#{NaiveDateTime.to_iso8601(start_time)}' and
+        accounts.inserted_at <= '#{NaiveDateTime.to_iso8601(end_time)}'
+      ) as accounts
+      on date(accounts.inserted_at + interval '7' hour) = day
+      group by day
+      order by day asc
+    """
+
+    Tools.convert_result_query_insight(raw_query)
   end
 end

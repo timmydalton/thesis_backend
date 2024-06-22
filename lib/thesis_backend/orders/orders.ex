@@ -182,4 +182,80 @@ defmodule ThesisBackend.Orders do
 
     {:ok, orders}
   end
+
+  def get_insight_order_time(params) do
+    {start_time, end_time} =  {NaiveDateTime.from_iso8601!(params["startTime"]), NaiveDateTime.from_iso8601!(params["endTime"])}
+    raw_query = """
+      SELECT count(orders.id), day::date
+      FROM
+        generate_series(
+          date('#{Timex.shift(start_time, hours: 7)}'),
+          date('#{Timex.shift(end_time, hours: 7)}'),
+          '1 day'::interval
+        ) day
+      left join (
+        select * from orders
+        where orders.inserted_at >= '#{NaiveDateTime.to_iso8601(start_time)}' and
+        orders.inserted_at <= '#{NaiveDateTime.to_iso8601(end_time)}' and
+        orders.status in (0,1,2,3,8,9,11,12,13,16,17,20)
+      ) as orders
+      on date(orders.inserted_at + interval '7' hour) = day
+      group by day
+      order by day asc
+    """
+
+    Tools.convert_result_query_insight(raw_query)
+  end
+
+  def get_insight_revenue_time(params) do
+    {start_time, end_time} =  {NaiveDateTime.from_iso8601!(params["startTime"]), NaiveDateTime.from_iso8601!(params["endTime"])}
+    raw_query = """
+      SELECT COALESCE(sum(orders.invoice_value), 0) as count, day::date
+      FROM
+        generate_series(
+          date('#{Timex.shift(start_time, hours: 7)}'),
+          date('#{Timex.shift(end_time, hours: 7)}'),
+          '1 day'::interval
+        ) day
+      left join (
+        select * from orders
+        where orders.inserted_at >= '#{NaiveDateTime.to_iso8601(start_time)}' and
+        orders.inserted_at <= '#{NaiveDateTime.to_iso8601(end_time)}' and
+        orders.status in (0,1,2,3,8,9,11,12,13,16,17,20)
+      ) as orders
+      on date(orders.inserted_at + interval '7' hour) = day
+      group by day
+      order by day asc
+    """
+
+    Tools.convert_result_query_insight(raw_query)
+  end
+
+  def get_info_orders(params) do
+    start_time = NaiveDateTime.from_iso8601!(params["startTime"])
+    end_time =  NaiveDateTime.from_iso8601!(params["endTime"])
+
+    data =
+      Order
+      |> where([o], o.inserted_at >= ^start_time and o.inserted_at <= ^end_time)
+      |> preload([od], :order_items)
+      |> Repo.all()
+
+    {:ok, data}
+  end
+
+  def compare_info_order(params) do
+    start_time = NaiveDateTime.from_iso8601!(params["startTime"])
+    end_time =  NaiveDateTime.from_iso8601!(params["endTime"])
+    _difference_start_end_time = NaiveDateTime.diff(end_time, start_time)
+    compare_start_time = NaiveDateTime.add((NaiveDateTime.add(start_time, -NaiveDateTime.diff(end_time, start_time), :second)) |> Timex.end_of_day() |> Timex.shift(hours: -7), 1, :second)
+    compare_end_time = NaiveDateTime.add(start_time, -1, :second)
+    query =
+      Order
+      |> where([o], o.inserted_at >= ^compare_start_time and o.inserted_at <= ^compare_end_time)
+      |> select([o], %{status: o.status, invoice_value: o.invoice_value})
+
+      data = Repo.all(query)
+    {:ok, data}
+  end
 end

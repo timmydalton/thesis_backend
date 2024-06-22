@@ -1,6 +1,4 @@
 defmodule ThesisBackend.Tools do
-
-
   def is_empty?(val) when val in [nil, "null", "undefined", "", [], %{}, "[object Object]"],
     do: true
 
@@ -221,5 +219,44 @@ defmodule ThesisBackend.Tools do
       end
 
     {start_time, end_time}
+  end
+
+  def convert_result_query_insight(raw_query) do
+    case Ecto.Adapters.SQL.query(ThesisBackend.Repo, raw_query) do
+      {:ok, %Postgrex.Result{rows: rows, columns: columns}} ->
+        rows
+        |> Enum.map(fn row ->
+          row
+          |> Enum.with_index()
+          |> Enum.reduce(%{}, fn {el, idx}, acc ->
+            pattern = ~r/<<([\d,\s]+)>>/
+
+            el =
+              if is_bitstring(el) do
+                str = Macro.to_string(el)
+
+                if String.contains?(str, "<<") do
+                  if Regex.match?(pattern, str) do
+                    case Ecto.UUID.cast(el) do
+                      {:ok, v} -> v
+                      _ -> el
+                    end
+                  else
+                    el
+                  end
+                else
+                  el
+                end
+              else
+                el
+              end
+
+            Map.put(acc, Enum.at(columns, idx), el)
+          end)
+        end)
+
+      _ ->
+        []
+    end
   end
 end

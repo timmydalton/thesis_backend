@@ -72,6 +72,7 @@ defmodule ThesisBackendWeb.Router do
 
       scope "/orders" do
         get "/all", OrderController, :all
+        get "/get_by_time", OrderController, :get_order_by_time
       end
     end
   end
