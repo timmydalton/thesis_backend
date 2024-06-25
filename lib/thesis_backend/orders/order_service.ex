@@ -6,14 +6,23 @@ defmodule ThesisBackend.Services.OrderService do
   def create_or_update_order(conn, account, params) do
     account_id = if conn.assigns[:account], do: conn.assigns[:account].id, else: nil
 
-    invoice_value =
-      (params["order_items"] || [])
-      |> Enum.reduce(0, fn el, acc ->
-        quantity = Tools.to_int(el["quantity"] || 0)
-        price = el["variation_info"]["retail_price"] || 0
+    product_price = (params["order_items"] || [])
+    |> Enum.reduce(0, fn el, acc ->
+      quantity = Tools.to_int(el["quantity"] || 0)
+      price = el["variation_info"]["retail_price"] || 0
 
-        acc + quantity * Tools.to_int(price)
-      end)
+      acc + quantity * Tools.to_int(price)
+    end)
+
+    custom_price = (params["custom_items"] || [])
+    |> Enum.reduce(0, fn el, acc ->
+      quantity = Tools.to_int(el["quantity"] || 0)
+      price = 149000
+
+      acc + quantity * Tools.to_int(price)
+    end)
+
+    invoice_value = product_price + custom_price
 
     order_attrs =
       Map.take(params, [
@@ -24,7 +33,8 @@ defmodule ThesisBackend.Services.OrderService do
         "form_data",
         "status",
         "payment_method",
-        "shipping_fee"
+        "shipping_fee",
+        "custom_items"
       ])
       |> Map.merge(%{
         "shipping_address" => params["shipping_address"],
