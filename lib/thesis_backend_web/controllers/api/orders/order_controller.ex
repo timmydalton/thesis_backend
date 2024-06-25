@@ -54,6 +54,29 @@ defmodule ThesisBackendWeb.Api.OrderController do
     end
   end
 
+  def all_by_account(conn, params) do
+    with {:ok, orders} <- Orders.get_all_order(params) do
+      data = Order.json(orders.data)
+
+      orders =
+        Map.merge(orders, %{
+          data: data
+        })
+
+      {:success, :with_data, "orders", orders}
+    end
+  end
+
+  def order_by_id(conn, %{"order_id" => order_id } = _params) do
+
+    with {:ok, order} <- Orders.get_order_by_id(order_id) do
+      order =
+        Order.json(order)
+
+      {:success, :with_data, "order", order}
+    end
+  end
+
   def get_order_by_time(_conn, params) do
     [insight_order, insight_revenue, insight_account, {:ok, info_order}, {:ok, compare_info_order}]  =
       [

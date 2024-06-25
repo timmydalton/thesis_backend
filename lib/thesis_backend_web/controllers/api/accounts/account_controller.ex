@@ -46,4 +46,25 @@ defmodule ThesisBackendWeb.Api.AccountController do
         {:failed, :with_reason, "not_found"}
     end
   end
+
+  def update_account(conn, params) do
+    user = (Map.get(conn.assigns, :account) || %{})
+
+    if !Tools.is_empty?(user) do
+      params = Tools.to_atom_keys_map(params)
+
+      case Accounts.update_account(user.id, params) do
+        {:ok, user} ->
+          user = user
+          |> Account.json()
+
+          {:success, :with_data, user}
+
+        _ ->
+          {:failed, :with_reason, "update_failed"}
+      end
+    else
+      {:failed, :with_reason, "no_account"}
+    end
+  end
 end

@@ -21,6 +21,7 @@ defmodule ThesisBackend.Orders.Order do
     field :invoice_value, :integer, default: 0
     field :display_id, :integer
     field :is_deleted, :boolean, default: false
+    field :payment_method, :integer
 
     belongs_to :account, Account, type: Ecto.UUID
     has_many(:order_items, OrderItem, foreign_key: :order_id)

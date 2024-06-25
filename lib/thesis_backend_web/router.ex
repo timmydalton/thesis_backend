@@ -24,6 +24,12 @@ defmodule ThesisBackendWeb.Router do
 
     get "/@me", AccountController, :get_account
 
+    scope "/user" do
+      post "/update", AccountController, :update_account
+      get "/orders", OrderController, :all_by_account
+      get "/order_by_id", OrderController, :order_by_id
+    end
+
     scope "/store" do
       scope "/products" do
         get "/all", ProductController, :all

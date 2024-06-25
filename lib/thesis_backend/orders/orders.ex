@@ -2,7 +2,7 @@ defmodule ThesisBackend.Orders do
   import Ecto.Query, warn: false
   import ThesisBackend.Guards
 
-  alias ThesisBackend.{Repo, Tools}
+  alias ThesisBackend.{Repo, Tools, Orders}
   alias ThesisBackend.Variations.Variation
   alias ThesisBackend.Products.Product
   alias ThesisBackend.Orders.{Order, OrderItem}
@@ -59,6 +59,7 @@ defmodule ThesisBackend.Orders do
     Order
     |> where([o], o.id == ^id)
     |> Repo.one()
+    |> Orders.preload_order(preload_order_items: true)
     |> Tools.get_record()
   end
 
@@ -102,6 +103,7 @@ defmodule ThesisBackend.Orders do
     offset = (page - 1) * limit
     term = params["term"]
     status = params["status"]
+    account_id = params["account_id"]
 
     filter_options =
       (params["filter_options"] || "")
@@ -127,6 +129,11 @@ defmodule ThesisBackend.Orders do
     query =
       if start_time && end_time,
         do: where(query, [o], o.inserted_at >= ^start_time and o.inserted_at <= ^end_time),
+        else: query
+
+    query =
+      if account_id,
+        do: where(query, [o], o.account_id == ^account_id),
         else: query
 
     # use CustomEcto

@@ -32,6 +32,7 @@ defmodule ThesisBackend.Services.OrderService do
         "bill_phone_number" => params["phone_number"],
         "invoice_value" => invoice_value,
         "note" => params["note"],
+        "account_id" => account_id
       })
 
     get = fn -> Orders.get_order_by_id(params["id"]) end
