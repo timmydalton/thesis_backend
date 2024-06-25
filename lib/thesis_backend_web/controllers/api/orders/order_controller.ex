@@ -67,9 +67,18 @@ defmodule ThesisBackendWeb.Api.OrderController do
     end
   end
 
-  def order_by_id(conn, %{"order_id" => order_id } = _params) do
+  def order_by_id(conn, %{ "order_id" => order_id } = _params) do
 
     with {:ok, order} <- Orders.get_order_by_id(order_id) do
+      order =
+        Order.json(order)
+
+      {:success, :with_data, "order", order}
+    end
+  end
+
+  def track_order(conn, %{ "order_display_id" => order_display_id, "phone_number" => phone_number } = _params) do
+    with {:ok, order} <- Orders.tracking_order(order_display_id, phone_number) do
       order =
         Order.json(order)
 

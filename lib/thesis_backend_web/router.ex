@@ -43,6 +43,7 @@ defmodule ThesisBackendWeb.Router do
 
       scope "/order" do
         post "/quick_order", OrderController, :quick_order
+        get "/tracking_order", OrderController, :track_order
       end
     end
 

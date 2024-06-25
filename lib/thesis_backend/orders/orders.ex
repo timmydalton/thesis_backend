@@ -63,6 +63,14 @@ defmodule ThesisBackend.Orders do
     |> Tools.get_record()
   end
 
+  def tracking_order(display_id, phone) do
+    Order
+    |> where([o], o.display_id == ^display_id and o.bill_phone_number == ^phone)
+    |> Repo.one()
+    |> Orders.preload_order(preload_order_items: true)
+    |> Tools.get_record()
+  end
+
   def get_count_order_by_status() do
     count =
       Order
