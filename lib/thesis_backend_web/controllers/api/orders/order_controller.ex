@@ -117,4 +117,30 @@ defmodule ThesisBackendWeb.Api.OrderController do
 
     {:success, :with_data, :insight, data}
   end
+
+  def payment_success(_conn, %{ "order_id" => order_id } = params) do
+    with {:ok, order} <- Orders.get_order_by_id(order_id) do
+      invoice_value = Map.get(order, :invoice_value)
+
+      Orders.update_order(order, %{ transfer_money: invoice_value })
+
+      {:success, :success_only}
+    else
+      _ ->
+        {:failed, :with_reason, "get_order_failed"}
+    end
+  end
+
+  def update_order(_conn, %{ "order_id" => order_id } = params) do
+    attrs = params["attrs"] || %{}
+
+    with {:ok, order} <- Orders.get_order_by_id(order_id),
+     {:ok, new_order} <- Orders.update_order(order, attrs)
+    do
+      {:success, :with_data, "order", new_order |> Order.json()}
+    else
+      _ ->
+        {:failed, :with_reason, "update_order_failed"}
+    end
+  end
 end

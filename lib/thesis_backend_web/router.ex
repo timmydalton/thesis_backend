@@ -44,6 +44,7 @@ defmodule ThesisBackendWeb.Router do
       scope "/order" do
         post "/quick_order", OrderController, :quick_order
         get "/tracking_order", OrderController, :track_order
+        post "/payment_success", OrderController, :payment_success
       end
     end
 
@@ -80,6 +81,7 @@ defmodule ThesisBackendWeb.Router do
       scope "/orders" do
         get "/all", OrderController, :all
         get "/get_by_time", OrderController, :get_order_by_time
+        post "/update_order", OrderController, :update_order
       end
     end
   end
