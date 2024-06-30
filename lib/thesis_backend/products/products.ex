@@ -89,4 +89,96 @@ defmodule ThesisBackend.Products do
     |> where([p], p.id in ^ids and not p.is_removed)
     |> Repo.update_all(set: [is_removed: true])
   end
+
+  def slugify(term) do
+    term
+    |> String.replace(String.codepoints("áàãạảAÁÀÃẠẢăắằẵặẳĂẮẰẴẶẲâầấẫậẩÂẤẦẪẬẨ"), "a")
+    |> String.replace(String.codepoints("éèẽẹẻEÉÈẼẸẺêếềễệểÊẾỀỄỆỂ"), "e")
+    |> String.replace(String.codepoints("íìĩịỉIÍÌĨỊỈ"), "i")
+    |> String.replace(String.codepoints("óòõọỏOÓÒÕỌỎôốồỗộổÔỐỒỖỘỔơớờỡợởƠỚỜỠỢỞ"), "o")
+    |> String.replace(String.codepoints("úùũụủUÚÙŨỤỦưứừữựửƯỨỪỮỰỬ"), "u")
+    |> String.replace(String.codepoints("ýỳỹỵỷYÝỲỸỴỶ"), "y")
+    |> String.replace(String.codepoints("dđĐD"), "d")
+    |> String.downcase
+  end
+
+  def search_product_name(params) do
+    limit = Tools.to_int(params["limit"] || "20")
+    page = Tools.to_int(params["page"] || "1")
+    term = params["term"] || ""
+    offset = (page - 1) * limit
+
+    term = slugify(term)
+
+    query = Product
+      |> where([p], fragment("vietnamese_unaccent(lower(?)) ILIKE ?", p.name, ^"%#{term}%") and not p.is_removed)
+      |> order_by([p], desc: p.inserted_at)
+
+    query =
+      query
+      |> group_by([p], [
+        p.id,
+        p.name,
+        p.is_hidden,
+        p.inserted_at,
+        p.custom_id,
+        p.updated_at,
+      ])
+
+    get_total_entries = fn ->
+      record =
+        query
+        |> select([p], %{total: fragment("COUNT(?) OVER ()", p.id)})
+        |> Repo.all()
+        |> List.first()
+
+      (record || %{})
+      |> Map.get(:total)
+    end
+
+    variation_preload_query =
+      Variation
+      |> where([v], v.is_removed == false)
+
+    category_preload_query =
+      ProductCategory
+      |> join(:inner, [pc], c in Category, on: pc.category_id == c.id and not c.is_removed)
+      |> where([pc], not pc.is_removed)
+      |> select([pc, c], c)
+
+    query =
+      query
+      |> preload([p],
+        variations: ^variation_preload_query,
+        categories: ^category_preload_query
+      )
+
+    query
+      |> offset([p], ^offset)
+      |> limit([p], ^limit)
+
+    [data, total_entries] =
+      Task.await_many([
+        Task.async(fn ->
+          Repo.all(query)
+        end),
+        Task.async(fn ->
+          get_total_entries.()
+        end)
+      ])
+
+    product_ids = Enum.map(data, & &1.id)
+
+    data =
+      Enum.map(data, fn product ->
+        Product.json(product)
+      end)
+
+    variations =
+      Variation
+      |> where([v], v.product_id in ^product_ids)
+      |> Repo.all()
+
+    {:ok, data, total_entries}
+  end
 end

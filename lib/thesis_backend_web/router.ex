@@ -34,6 +34,7 @@ defmodule ThesisBackendWeb.Router do
       scope "/products" do
         get "/all", ProductController, :all
         get "/all_by_category", ProductController, :get_all_product_by_category
+        get "/search_product_name", ProductController, :search_product_name
         get "/:product_id", ProductController, :get_product_by_id
       end
 

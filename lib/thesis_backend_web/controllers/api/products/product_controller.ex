@@ -270,4 +270,18 @@ defmodule ThesisBackendWeb.Api.ProductController do
       })
       end
   end
+
+  def search_product_name(conn, %{"page" => page, "limit" => limit, "term" => term} = params) do
+    with {:ok, products, total_product} <-
+      Products.search_product_name(params) do
+
+      json(conn, %{
+        success: true,
+        products: products,
+        total_product: total_product,
+        page: page,
+        limit: limit
+      })
+      end
+  end
 end
