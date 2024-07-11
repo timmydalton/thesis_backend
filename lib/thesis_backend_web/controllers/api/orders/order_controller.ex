@@ -120,9 +120,10 @@ defmodule ThesisBackendWeb.Api.OrderController do
 
   def payment_success(_conn, %{ "order_id" => order_id } = params) do
     with {:ok, order} <- Orders.get_order_by_id(order_id) do
-      invoice_value = Map.get(order, :invoice_value)
+      invoice_value = Map.get(order, :invoice_value, 0)
+      shipping_fee = Map.get(order, :shipping_fee, 0)
 
-      Orders.update_order(order, %{ transfer_money: invoice_value })
+      Orders.update_order(order, %{ transfer_money: invoice_value + shipping_fee })
 
       {:success, :success_only}
     else
