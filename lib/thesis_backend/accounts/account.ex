@@ -23,6 +23,7 @@ defmodule ThesisBackend.Accounts.Account do
     field :utc_offset, :integer
     field :role, :integer
     field :block_reason, :string
+    field :address, :string
 
     timestamps()
   end
@@ -45,7 +46,8 @@ defmodule ThesisBackend.Accounts.Account do
       :timezone,
       :utc_offset,
       :role,
-      :block_reason
+      :block_reason,
+      :address
     ])
     |> unique_constraint(:email,
       name: :accounts_email_index,
@@ -80,7 +82,8 @@ defmodule ThesisBackend.Accounts.Account do
       :timezone,
       :utc_offset,
       :role,
-      :block_reason
+      :block_reason,
+      :address
     ])
   end
 

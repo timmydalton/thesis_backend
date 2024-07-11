@@ -7,7 +7,7 @@ defmodule ThesisBackendWeb.Api.AccountController do
 
   def get_account(conn, _params) do
     user = (Map.get(conn.assigns, :account) || %{})
-      |> Map.take([:avatar, :email, :first_name, :last_name, :id, :locale, :phone_number, :role, :status, :settings, :username])
+      |> Map.take([:avatar, :email, :first_name, :last_name, :id, :locale, :phone_number, :role, :status, :settings, :username, :address])
 
     res = if Tools.is_empty?(user), do: %{}, else: user
 
@@ -18,9 +18,19 @@ defmodule ThesisBackendWeb.Api.AccountController do
     username = Map.get(params, "username")
     password = Map.get(params, "password")
 
+    attrs = Map.take(params, [
+      "username",
+      "password",
+      "first_name",
+      "last_name",
+      "email",
+      "phone_number",
+      "address"
+    ])
+
     case Accounts.check_user_exist(username) do
       0 ->
-        case Accounts.create_new_account(username, password) do
+        case Accounts.create_new_account(attrs, password) do
           {:ok, user} ->
             token = Accounts.generate_token(user.id)
             user = user

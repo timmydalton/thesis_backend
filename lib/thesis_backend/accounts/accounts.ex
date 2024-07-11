@@ -31,14 +31,13 @@ defmodule ThesisBackend.Accounts do
     |> Repo.one()
   end
 
-  def create_new_account(username, password) do
+  def create_new_account(attrs, password) do
     password_hash = Bcrypt.hash_pwd_salt(password)
 
-    attrs = %{
-      username: username,
-      password_hash: password_hash,
-      status: 1
-    }
+    attrs = Map.merge(attrs, %{
+      "password_hash" => password_hash,
+      "status" => 1
+    })
 
     %Account{}
     |> Account.changeset(attrs)
